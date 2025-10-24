@@ -7,7 +7,7 @@ code package and also available on the project page: https://github.com/playfuls
 <modification>
     <name>Playful Sparkle - Google Product Review Feed</name>
     <code>ps_product_review_feed</code>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <author>Playful Sparkle</author>
     <link>https://github.com/playfulsparkle/oc3_product_review_feed.git</link>
     <file path="catalog/controller/checkout/confirm.php">

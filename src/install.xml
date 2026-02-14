@@ -7,7 +7,7 @@ code package and also available on the project page: https://github.com/playfuls
 <modification>
     <name>Playful Sparkle - Google Product Review Feed</name>
     <code>ps_product_review_feed</code>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <author>Playful Sparkle</author>
     <link>https://github.com/playfulsparkle/oc3_product_review_feed.git</link>
     <file path="catalog/controller/checkout/confirm.php">
@@ -54,10 +54,24 @@ code package and also available on the project page: https://github.com/playfuls
         <operation>
             <search><![CDATA[foreach ($this->cart->getProducts() as $product) {]]></search>
             <add position="after"><![CDATA[
-            if (isset($product['mpn']) && $product['mpn']) {
-                $ps_products[] = ['gtin' => $product['mpn']];
-            } else  if (isset($product['ean']) && $product['ean']) {
-                $ps_products[] = ['gtin' => $product['ean']];
+            $gtin = '';
+
+            if (isset($product['ean']) && !empty($product['ean'])) {
+                $gtin = $product['ean'];
+            } elseif (isset($product['upc']) && !empty($product['upc'])) {
+                $gtin = $product['upc'];
+            } elseif (isset($product['jan']) && !empty($product['jan'])) {
+                $gtin = $product['jan'];
+            } elseif (isset($product['isbn']) && !empty($product['isbn']) && preg_match('/^[0-9]{13}$/', $product['isbn'])) {
+                $gtin = $product['isbn'];
+            }
+
+            if ($gtin !== '' && preg_match('/[^0-9]/', $gtin)) {
+                $gtin = '';
+            }
+
+            if ($gtin !== '') {
+                $ps_products[] = ['gtin' => $gtin];
             }
             ]]></add>
         </operation>
@@ -95,19 +109,19 @@ code package and also available on the project page: https://github.com/playfuls
             if (isset($this->session->data['ps_order_id'])) {
                 $data['ps_order_id'] = $this->session->data['ps_order_id'];
             } else {
-                $args['ps_order_id'] = null;
+                $data['ps_order_id'] = null;
             }
 
             if ($this->session->data['ps_email']) {
                 $data['ps_email'] = $this->session->data['ps_email'];
             } else {
-                $args['ps_email'] = null;
+                $data['ps_email'] = null;
             }
 
             if ($this->session->data['ps_delivery_country']) {
                 $data['ps_delivery_country'] = $this->session->data['ps_delivery_country'];
             } else {
-                $args['ps_delivery_country'] = null;
+                $data['ps_delivery_country'] = null;
             }
 
             $data['ps_estimated_delivery_date'] = date('Y-m-d', strtotime('+1 day'));
@@ -115,7 +129,7 @@ code package and also available on the project page: https://github.com/playfuls
             if ($this->session->data['ps_products']) {
                 $data['ps_products'] = $this->session->data['ps_products'];
             } else {
-                $args['ps_products'] = null;
+                $data['ps_products'] = null;
             }
 
             unset(

@@ -65,11 +65,11 @@ class ControllerExtensionFeedPsProductReviewFeed extends Controller
         // Start <feed> element
         // @see https://developers.google.com/product-review-feeds/schema
         $xml->startElement('feed'); // Start <feed>
-        $xml->writeAttribute('xmlns:vc', 'http://www.w3.org/2007/XMLSchema-versioning'); // @see https://developers.google.com/shopping/reviews/schema/product/2.3/product_reviews#xmlns-vc
-        $xml->writeAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance'); // @see https://developers.google.com/shopping/reviews/schema/product/2.3/product_reviews#xmlns-xsi
-        $xml->writeAttribute('xsi:noNamespaceSchemaLocation', 'http://www.google.com/shopping/reviews/schema/product/2.3/product_reviews.xsd'); // @see https://developers.google.com/shopping/reviews/schema/product/2.3/product_reviews#xsi-noNamespaceSchemaLocation
+        $xml->writeAttribute('xmlns:vc', 'http://www.w3.org/2007/XMLSchema-versioning');
+        $xml->writeAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+        $xml->writeAttribute('xsi:noNamespaceSchemaLocation', 'http://www.google.com/shopping/reviews/schema/product/2.4/product_reviews.xsd');
 
-        $xml->writeElement('version', '2.3'); // @see https://developers.google.com/shopping/reviews/schema/product/2.3/product_reviews#version
+        $xml->writeElement('version', '2.4');
 
         $xml->startElement('aggregator'); // Start <aggregator>
         $xml->writeElement('name', $this->config->get('config_name'));
@@ -80,17 +80,15 @@ class ControllerExtensionFeedPsProductReviewFeed extends Controller
         $xml->writeElement('name', $this->config->get('config_name')); // Store name
 
         if ($this->request->server['HTTPS']) {
-			$server = $this->config->get('config_ssl');
-		} else {
-			$server = $this->config->get('config_url');
-		}
+            $server = $this->config->get('config_ssl');
+        } else {
+            $server = $this->config->get('config_url');
+        }
 
         if (is_file(DIR_IMAGE . $this->config->get('config_icon'))) {
             $xml->startElement('favicon'); // Start <favicon>
             $xml->writeCData($server . 'image/' . $this->config->get('config_icon')); // Store icon URL
             $xml->endElement(); // End <favicon>
-        } else {
-            $xml->writeElement('favicon'); // Store icon URL
         }
 
         $xml->endElement(); // End <publisher>
@@ -120,11 +118,29 @@ class ControllerExtensionFeedPsProductReviewFeed extends Controller
             $xml->writeCData($review['text']);
             $xml->endElement(); // End <content>
 
+            if (!empty($review['date_added'])) {
+                $xml->writeElement('review_timestamp', gmdate('Y-m-d\TH:i:s\Z', strtotime($review['date_added'])));
+            }
+
+            // review_language: ISO 639-1, ex: en, sk, hu
+            $lang_code = strtolower(substr((string) $this->config->get('config_language'), 0, 2));
+
+            if ($lang_code) {
+                $xml->writeElement('review_language', $lang_code);
+            }
+
+            // review_country: ISO 3166-1 alpha-2, set from config or hardcode if single-country
+            $country = (string) $this->config->get('config_country_code'); // if you have it
+
+            if ($country) {
+                $xml->writeElement('review_country', strtoupper($country));
+            }
+
             $product_link = $this->url->link('product/product', 'product_id=' . $review['product_id']);
 
             $xml->startElement('review_url'); // Start <review_url>
             $xml->writeAttribute('type', 'singleton'); // @see https://developers.google.com/shopping/reviews/schema/product/2.3/product_reviews#review_url
-            $xml->writeCData($product_link); // Product URL
+            $xml->writeCData(str_replace('&amp;', '&', $product_link) . '#review-' . (int) $review['review_id']); // Product URL
             $xml->endElement(); // End <review_url>
 
             $xml->startElement('ratings'); // Start <ratings>
@@ -132,7 +148,16 @@ class ControllerExtensionFeedPsProductReviewFeed extends Controller
             $xml->startElement('overall'); // Start <overall>
             $xml->writeAttribute('min', '1'); // @see https://developers.google.com/shopping/reviews/schema/product/2.3/product_reviews#overall
             $xml->writeAttribute('max', '5'); // @see https://developers.google.com/shopping/reviews/schema/product/2.3/product_reviews#overall
-            $xml->text($review['rating']); // Overall rating
+
+            $rating = (float) $review['rating'];
+
+            if ($rating < 1) {
+                $rating = 1;
+            } elseif ($rating > 5) {
+                $rating = 5;
+            }
+
+            $xml->text(number_format($rating, 1, '.', '')); // Overall rating
             $xml->endElement(); // End <overall>
 
             $xml->endElement(); // End <ratings>
@@ -143,48 +168,74 @@ class ControllerExtensionFeedPsProductReviewFeed extends Controller
 
             $xml->startElement('product_ids'); // Start <product_ids>
 
-            if (isset($review['ean']) || isset($review['mpn'])) {
-                $xml->startElement('gtins'); // Start <gtins>
+            // Brand, MPN, and GTIN candidates
+            $brand = isset($review['manufacturer_name']) ? trim((string) $review['manufacturer_name']) : '';
+            $mpn = isset($review['mpn']) ? trim((string) $review['mpn']) : '';
 
-                if (isset($review['ean']) && $review['ean']) {
-                    $xml->startElement('ean');
-                    $xml->writeCData($review['ean']);
-                    $xml->endElement();
-                } else if (isset($review['mpn']) && $review['mpn']) {
-                    $xml->startElement('mpn');
-                    $xml->writeCData($review['mpn']);
-                    $xml->endElement();
-                }
+            $upc = isset($review['upc']) ? trim((string) $review['upc']) : '';
+            $ean = isset($review['ean']) ? trim((string) $review['ean']) : '';
+            $jan = isset($review['jan']) ? trim((string) $review['jan']) : '';
+            $isbn = isset($review['isbn']) ? trim((string) $review['isbn']) : '';
 
-                $xml->endElement(); // End <gtins>
+            // Prefer EAN, then UPC, then JAN
+            $gtin = ($ean !== '') ? $ean : $upc;
+
+            if ($gtin === '') {
+                $gtin = ($jan !== '') ? $jan : '';
             }
 
-            if (isset($review['mpn']) && $review['mpn']) {
-                $xml->startElement('mpns'); // Start <mpns>
+            // If still empty, allow ISBN only if it is 13 digits
+            if ($gtin === '' && $isbn !== '' && preg_match('/^[0-9]{13}$/', $isbn)) {
+                $gtin = $isbn;
+            }
+
+            // Block GTIN if it contains any non-digit characters
+            if ($gtin !== '' && preg_match('/[^0-9]/', $gtin)) {
+                $gtin = '';
+            }
+
+            // GTIN must be gtins/gtin (not ean, not upc, not mpn)
+            if ($gtin !== '') {
+                $xml->startElement('gtins');
+
+                $xml->startElement('gtin');
+                $xml->writeCData($gtin);
+                $xml->endElement(); // gtin
+
+                $xml->endElement(); // gtins
+            }
+
+            // MPN
+            if ($mpn !== '') {
+                $xml->startElement('mpns');
 
                 $xml->startElement('mpn');
-                $xml->writeCData($review['mpn']);
-                $xml->endElement();
+                $xml->writeCData($mpn);
+                $xml->endElement(); // mpn
 
-                $xml->endElement(); // End <mpns>
+                $xml->endElement(); // mpns
             }
 
-            if (isset($review['sku']) && $review['sku']) {
-                $xml->startElement('skus'); // Start <skus>
+            // SKU
+            if (!empty($review['sku'])) {
+                $xml->startElement('skus');
 
                 $xml->startElement('sku');
                 $xml->writeCData($review['sku']);
-                $xml->endElement();
+                $xml->endElement(); // sku
 
-                $xml->endElement(); // End <skus>
+                $xml->endElement(); // skus
             }
 
-            if ($review['manufacturer_name']) {
-                $xml->startElement('brands'); // Start <brands>
+            // Brand
+            if ($brand !== '') {
+                $xml->startElement('brands');
 
-                $xml->writeElement('brand', $review['manufacturer_name']);
+                $xml->startElement('brand');
+                $xml->writeCData(html_entity_decode($brand, ENT_QUOTES, 'UTF-8'));
+                $xml->endElement(); // brand
 
-                $xml->endElement(); // End <brands>
+                $xml->endElement(); // brands
             }
 
             $xml->endElement(); // End <product_ids>
@@ -194,7 +245,7 @@ class ControllerExtensionFeedPsProductReviewFeed extends Controller
             $xml->endElement(); // End <product_name>
 
             $xml->startElement('product_url'); // Start <product_url>
-            $xml->writeCData($product_link); // Product URL
+            $xml->writeCData(str_replace('&amp;', '&', $product_link)); // Product URL
             $xml->endElement(); // End <product_url>
 
             $xml->endElement(); // End <product>

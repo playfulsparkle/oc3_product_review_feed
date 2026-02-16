@@ -47,6 +47,21 @@
             <div class="tab-pane active" id="tab-general">
 
 							<div class="form-group">
+								<label for="input-status" class="col-sm-2 control-label">{{ entry_status }}</label>
+								<div class="col-sm-10">
+									<select name="feed_ps_product_review_feed_status" id="input-status" class="form-control">
+										{% if feed_ps_product_review_feed_status %}
+										<option value="1" selected="selected">{{ text_enabled }}</option>
+										<option value="0">{{ text_disabled }}</option>
+										{% else %}
+										<option value="1">{{ text_enabled }}</option>
+										<option value="0" selected="selected">{{ text_disabled }}</option>
+										{% endif %}
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group">
 								<label for="input-merchant-id" class="col-sm-2 control-label">{{ entry_merchant_id }}</label>
 								<div class="col-sm-10">
 									<input type="text" name="feed_ps_product_review_feed_merchant_id" value="{{ feed_ps_product_review_feed_merchant_id }}" placeholder="{{ entry_merchant_id }}" id="input-merchant-id" class="form-control">
@@ -55,13 +70,29 @@
 								</div>
 							</div>
 
+							<div class="form-group">
+								<label class="col-sm-2 control-label">{{ entry_review_feed_url }}</label>
+								<div class="col-sm-10">
+									{% for language in languages %}
+									<div class="input-group">
+										<span class="input-group-addon"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}"></span>
+										<input type="text" name="review_feed_{{ language.language_id }}" value="{{ review_feed_urls[language.language_id] }}" id="input-review-feed-{{ language.language_id }}" class="form-control" readonly>
+										<span class="input-group-btn">
+											<button type="button" class="btn btn-info btn-copy" data-toggle="tooltip" data-input-id="input-review-feed-{{ language.language_id }}" title="{{ help_copy }}"><i class="fa fa-copy"></i></button>
+											<button type="button" class="btn btn-light btn-open" data-toggle="tooltip" data-input-id="input-review-feed-{{ language.language_id }}" title="{{ help_open }}"><i class="fa fa-link"></i></button>
+										</span>
+									</div>
+									{% endfor %}
+								</div>
+							</div>
+
 							<fieldset>
 								<legend>{{ heading_integrations }}</legend>
 
 								<div class="form-group">
-									<label for="input-status" class="col-sm-2 control-label">{{ opt_in_integration }}</label>
+									<label for="input-opt-in-integration" class="col-sm-2 control-label">{{ opt_in_integration }}</label>
 									<div class="col-sm-10">
-										<select name="feed_ps_product_review_feed_opt_in_integration" id="input-status" class="form-control">
+										<select name="feed_ps_product_review_feed_opt_in_integration" id="input-opt-in-integration" class="form-control">
 											{% if feed_ps_product_review_feed_opt_in_integration %}
 											<option value="1" selected="selected">{{ text_enabled }}</option>
 											<option value="0">{{ text_disabled }}</option>
@@ -75,9 +106,9 @@
 								</div>
 
 								<div class="form-group">
-									<label for="input-status" class="col-sm-2 control-label">{{ badge_integration }}</label>
+									<label for="input-badge-integration" class="col-sm-2 control-label">{{ badge_integration }}</label>
 									<div class="col-sm-10">
-										<select name="feed_ps_product_review_feed_badge_integration" id="input-status" class="form-control">
+										<select name="feed_ps_product_review_feed_badge_integration" id="input-badge-integration" class="form-control">
 											{% if feed_ps_product_review_feed_badge_integration %}
 											<option value="1" selected="selected">{{ text_enabled }}</option>
 											<option value="0">{{ text_disabled }}</option>
@@ -110,39 +141,6 @@
 								</div>
 
 							</fieldset>
-
-							<hr>
-
-							<div class="form-group">
-								<label class="col-sm-2 control-label">{{ entry_review_feed_url }}</label>
-								<div class="col-sm-10">
-									{% for language in languages %}
-									<div class="input-group">
-										<span class="input-group-addon"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}"></span>
-										<input type="text" name="review_feed_{{ language.language_id }}" value="{{ review_feed_urls[language.language_id] }}" id="input-review-feed-{{ language.language_id }}" class="form-control" readonly>
-										<span class="input-group-btn">
-											<button type="button" class="btn btn-info btn-copy" data-toggle="tooltip" data-input-id="input-review-feed-{{ language.language_id }}" title="{{ help_copy }}"><i class="fa fa-copy"></i></button>
-											<button type="button" class="btn btn-light btn-open" data-toggle="tooltip" data-input-id="input-review-feed-{{ language.language_id }}" title="{{ help_open }}"><i class="fa fa-link"></i></button>
-										</span>
-									</div>
-									{% endfor %}
-								</div>
-							</div>
-
-							<div class="form-group">
-								<label for="input-status" class="col-sm-2 control-label">{{ entry_status }}</label>
-								<div class="col-sm-10">
-									<select name="feed_ps_product_review_feed_status" id="input-status" class="form-control">
-										{% if feed_ps_product_review_feed_status %}
-										<option value="1" selected="selected">{{ text_enabled }}</option>
-										<option value="0">{{ text_disabled }}</option>
-										{% else %}
-										<option value="1">{{ text_enabled }}</option>
-										<option value="0" selected="selected">{{ text_disabled }}</option>
-										{% endif %}
-									</select>
-								</div>
-							</div>
 
             </div>
             <div class="tab-pane" id="tab-support">

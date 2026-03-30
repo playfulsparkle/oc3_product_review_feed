@@ -2,14 +2,14 @@
 <!--
 This file is part of "Playful Sparkle - Google Product Review Feed" project and subject to the terms
 and conditions defined in file "LICENSE", which is part of this source
-code package and also available on the project page: https://github.com/playfulsparkle/oc3_product_review_feed.git
+code package and also available on the project page: https://github.com/playfulsparkle/oc3_product_review_feed
 -->
 <modification>
     <name>Playful Sparkle - Google Product Review Feed</name>
     <code>ps_product_review_feed</code>
     <version>1.0.3</version>
     <author>Playful Sparkle</author>
-    <link>https://github.com/playfulsparkle/oc3_product_review_feed.git</link>
+    <link>https://github.com/playfulsparkle/oc3_product_review_feed</link>
     <file path="catalog/controller/checkout/confirm.php">
         <operation>
             <search><![CDATA[$data['products'] = array();]]></search>

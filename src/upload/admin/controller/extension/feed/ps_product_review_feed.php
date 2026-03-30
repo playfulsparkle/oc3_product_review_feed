@@ -7,9 +7,14 @@ class ControllerExtensionFeedPsProductReviewFeed extends Controller
     const EXTENSION_EMAIL = 'support@playfulsparkle.com';
 
     /**
-     * @var string The documentation URL for the extension.
+     * @var string The URL to the support website.
      */
-    const EXTENSION_DOC = 'https://github.com/playfulsparkle/oc3_product_review_feed.git';
+    const SUPPORT_URL = 'https://support.playfulsparkle.com';
+
+    /**
+     * @var string The GitHub repository URL of the extension.
+     */
+    const GITHUB_REPO_URL = 'https://github.com/playfulsparkle/oc3_product_review_feed';
 
     private $error = array();
 
@@ -156,7 +161,7 @@ class ControllerExtensionFeedPsProductReviewFeed extends Controller
             $data['review_feed_urls'][$language['language_id']] = rtrim($store_url, '/') . '/index.php?route=extension/feed/ps_product_review_feed&language=' . $language['code'];
         }
 
-        $data['text_contact'] = sprintf($this->language->get('text_contact'), self::EXTENSION_EMAIL, self::EXTENSION_EMAIL, self::EXTENSION_DOC);
+        $data['text_contact'] = sprintf($this->language->get('text_contact'), self::SUPPORT_URL, self::GITHUB_REPO_URL, self::EXTENSION_EMAIL);
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
